@@ -5,13 +5,13 @@ A minimal post-training library.
 ## Install
 
 ```bash
-pip install git+https://github.com/rsikand29/maestro.git
+pip install git+https://github.com/rosikand/maestro.git
 ```
 
 Pin a tag or commit for reproducibility:
 
 ```bash
-pip install git+https://github.com/rsikand29/maestro.git@v0.0.1
+pip install git+https://github.com/rosikand/maestro.git@v0.0.1
 ```
 
 Confirm it worked:
