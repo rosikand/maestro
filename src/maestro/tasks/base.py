@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 
 class Task(ABC):
 
+    description = ""
+
     def __init__(self, split="train", limit=None):
         self.split = split
         self.limit = limit
@@ -46,6 +48,22 @@ class Task(ABC):
 
     def __getitem__(self, idx):
         return self.dataset[idx]
+
+    def __repr__(self):
+        limit_part = f", limit={self.limit}" if self.limit is not None else ""
+        return (
+            f"{type(self).__name__}(split={self.split!r}{limit_part}, "
+            f"examples={len(self)})"
+        )
+
+    def __str__(self):
+        name = type(self).__name__
+        if self.description:
+            return (
+                f"{name}: {self.description} "
+                f"({len(self)} examples, split={self.split!r})"
+            )
+        return repr(self)
 
     def _apply_limit(self, dataset):
         if self.limit is None:

@@ -70,6 +70,12 @@ def extract_expression(completion):
 
 class CountdownTask(Task):
 
+    description = (
+        "Small dataset of arithmetic expressions to solve. Given a set of numbers, produce an arithmetic expression "
+        "that equals a target using each number exactly once. Use each number exactly once. You may use +, -, *, /, "
+        "and parentheses. Put the final expression inside <answer>...</answer>."
+    )
+
     def load_dataset(self):
         dataset = load_dataset(
             "Jiayi-Pan/Countdown-Tasks-3to4",
