@@ -26,6 +26,7 @@ theme:
 nav:
   - Home: index.md
   - Tasks: tasks.md
+  - Models: models.md
   - API Reference: api.md
 
 plugins:

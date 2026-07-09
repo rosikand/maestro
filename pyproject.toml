@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "rosikand", email = "rsikand29@gmail.com" }]
-dependencies = ["datasets"]
+dependencies = ["datasets", "torch", "transformers"]
 
 [project.optional-dependencies]
 dev = ["pytest"]

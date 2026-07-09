@@ -1,13 +1,17 @@
 # API Reference
 
-## Registry
+## Tasks
 
 ::: maestro.tasks.registry.get_task
 
-## Base class
-
 ::: maestro.tasks.base.Task
 
-## Tasks
-
 ::: maestro.tasks.countdown.CountdownTask
+
+## Models
+
+::: maestro.models.registry.get_model
+
+::: maestro.models.base.Model
+
+::: maestro.models.transformers.TransformersModel
