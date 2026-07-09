@@ -21,48 +21,76 @@ python -c "import maestro; maestro.hello()"
 # hello, this is maestro
 ```
 
-## Datasets
+## Tasks
 
-Each dataset module has two functions — everything GRPO needs:
-
-- `load()` → a HF `datasets.Dataset` with a ready-to-train `prompt` column, plus the raw
-  fields (so you can re-template or inspect).
-- `reward(completions, **columns)` → `list[float]`. This follows the TRL reward-function
-  convention, so it works with `GRPOTrainer` as-is, or in a hand-rolled loop.
+A task bundles the two things a post-training loop needs: a dataset with a ready-to-train
+`prompt` column, and a `reward` function for scoring completions. Get one from the registry:
 
 ```python
-from maestro.datasets import countdown, gsm8k
+from maestro.tasks import get_task
 
-train = gsm8k.load("train")               # columns: prompt, question, answer
-puzzles = countdown.load(n=5000, seed=0)  # columns: prompt, numbers, target, solution
-
-gsm8k.reward(completions=["6 * 12 = 72\n#### 72"], answer=["72"])  # [1.0]
-countdown.reward(completions=["<answer>(1 + 2) / 3</answer>"], numbers=[[1, 2, 3]], target=[1])  # [1.0]
+task = get_task("countdown", split="train", limit=1000)
 ```
 
-With TRL:
+- `split` picks the dataset split (default `"train"`).
+- `limit` caps the number of examples (useful for quick experiments).
+
+A task acts like a dataset — index, iterate, or take `len()` of it. Each example has a
+`prompt` column plus the raw fields of the underlying dataset:
 
 ```python
-from trl import GRPOTrainer
-
-trainer = GRPOTrainer(
-    model="Qwen/Qwen2.5-1.5B",
-    train_dataset=countdown.load(n=5000),
-    reward_funcs=countdown.reward,
-)
-trainer.train()
+len(task)          # 1000
+task[0]["prompt"]  # "Using the numbers [44, 19, 35], create an arithmetic expression..."
+task[0]["nums"], task[0]["target"]
 ```
 
-Prompts are plain strings, which is what you want for base models. For instruct/chat models,
-wrap them into messages and TRL applies the chat template:
+`task.reward(completion, example)` returns a float score for a single completion:
 
 ```python
-ds = ds.map(lambda x: {"prompt": [{"role": "user", "content": x["prompt"]}]})
+task.reward("<answer>(44 - 19) + 35</answer>", task[0])  # 1.0 if correct, else 0.0
 ```
 
-Countdown puzzles are generated locally with a seed (no download), and the target is built by
-combining the numbers, so every puzzle is guaranteed solvable. Use a different seed for a held-out
-eval split. GSM8K's eval split is `gsm8k.load("test")`.
+For batched scoring (e.g. inside a trainer), zip completions with their examples:
+
+```python
+rewards = [
+    task.reward(completion, example)
+    for completion, example in zip(completions, examples)
+]
+```
+
+### Available tasks
+
+| Name | Dataset | Reward |
+|---|---|---|
+| `countdown` | [Jiayi-Pan/Countdown-Tasks-3to4](https://huggingface.co/datasets/Jiayi-Pan/Countdown-Tasks-3to4) | 1.0 if the expression in `<answer>...</answer>` uses each number exactly once and equals the target, else 0.0 |
+
+### Adding a task
+
+Subclass `Task` and implement `load_dataset()` (return a HF dataset with a `prompt` column)
+and `reward(completion, example)`, then register it:
+
+```python
+# src/maestro/tasks/mytask.py
+from datasets import load_dataset
+from .base import Task
+
+class MyTask(Task):
+    def load_dataset(self):
+        dataset = load_dataset("org/my-dataset", split=self.split)
+        return dataset.map(lambda x: {"prompt": f"Solve: {x['question']}"})
+
+    def reward(self, completion, example):
+        return float(completion.strip() == example["answer"])
+```
+
+```python
+# src/maestro/tasks/registry.py
+TASKS = {
+    "countdown": CountdownTask,
+    "mytask": MyTask,
+}
+```
 
 ## Develop
 
