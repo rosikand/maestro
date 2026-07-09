@@ -23,11 +23,11 @@ class Task(ABC):
         Calculate the reward for a given completion and example.
 
         Args:
-            completion: what the model generated
-            example: what problem it was answering
+            completion (str): what the model generated
+            example (dict): what problem it was answering
 
         Returns:
-            The reward for the completion.
+            float: The reward for the completion.
 
         Note:
             For batching with a trainer, use the following pattern: 
